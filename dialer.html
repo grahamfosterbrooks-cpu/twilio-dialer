@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Twilio Browser Dialer</title>
+    <script src="https://media.twiliocdn.com/sdk/js/client/v1.13/twilio.min.js"></script>
+</head>
+<body>
+    <h1>Twilio Browser Dialer</h1>
+
+    <label for="phoneNumber">Enter phone number:</label>
+    <input type="text" id="phoneNumber" placeholder="+441234567890">
+    <button id="callButton">Call</button>
+    <button id="hangupButton">Hang Up</button>
+
+    <script>
+        // Replace this URL with your Twilio Function URL
+        const twilioFunctionURL = 'https://voice-client-4536.twil.io/voice-client';
+
+        let device;
+
+        // Fetch the capability token from Twilio
+        async function getToken() {
+            const response = await fetch(twilioFunctionURL);
+            const data = await response.json();
+            return data.token;
+        }
+
+        async function setupDevice() {
+            const token = await getToken();
+            device = new Twilio.Device(token, { debug: true });
+
+            device.on('ready', function() {
+                console.log('Twilio Device Ready');
+            });
+
+            device.on('error', function(err) {
+                console.error('Twilio Device Error:', err);
+            });
+
+            device.on('connect', function(conn) {
+                console.log('Call connected');
+            });
+
+            device.on('disconnect', function(conn) {
+                console.log('Call disconnected');
+            });
+        }
+
+        document.getElementById('callButton').addEventListener('click', async () => {
+            if (!device) await setupDevice();
+            const number = document.getElementById('phoneNumber').value;
+            device.connect({ To: number });
+        });
+
+        document.getElementById('hangupButton').addEventListener('click', () => {
+            if (device) device.disconnectAll();
+        });
+
+    </script>
+</body>
+</html>
