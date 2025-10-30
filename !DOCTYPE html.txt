@@ -36,7 +36,7 @@ if (prefillNumber) {
 // Step 2: Get token from your deployed Function
 async function getToken() {
     try {
-        const response = await fetch('https://YOUR_FUNCTION_URL/voice-token'); // <-- replace with your Function URL
+        const response = await fetch('https://voice-client-4536.twil.io/voice-client'); // <-- replace with your Function URL
         const data = await response.json();
         return data.token;
     } catch (err) {
@@ -87,3 +87,4 @@ document.getElementById('hangupBtn').addEventListener('click', function() {
 
 </body>
 </html>
+
