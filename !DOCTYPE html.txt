@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Twilio Browser Dialer</title>
+<script src="https://media.twiliocdn.com/sdk/js/client/v1.13/twilio.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; }
+  input { margin: 5px; padding: 5px; width: 200px; }
+  button { margin: 5px; padding: 5px 10px; }
+  #status { margin-top: 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>Twilio Browser Dialer</h2>
+
+<label for="customerNumber">Customer Number (E.164 format):</label><br>
+<input type="text" id="customerNumber" placeholder="+44xxxxxxxxxx"><br>
+
+<button id="callBtn">Call</button>
+<button id="hangupBtn" disabled>Hang Up</button>
+
+<div id="status"></div>
+
+<script>
+let device;
+
+// Step 1: Read number from URL and pre-fill input
+const urlParams = new URLSearchParams(window.location.search);
+const prefillNumber = urlParams.get('number');
+if (prefillNumber) {
+    document.getElementById('customerNumber').value = prefillNumber;
+}
+
+// Step 2: Get token from your deployed Function
+async function getToken() {
+    try {
+        const response = await fetch('https://YOUR_FUNCTION_URL/voice-token'); // <-- replace with your Function URL
+        const data = await response.json();
+        return data.token;
+    } catch (err) {
+        document.getElementById('status').innerText = 'Error fetching token: ' + err.message;
+        console.error(err);
+    }
+}
+
+// Step 3: Initialize Twilio Device
+async function initDevice() {
+    const token = await getToken();
+    device = new Twilio.Device(token, { debug: true });
+
+    device.on('ready', function() {
+        document.getElementById('status').innerText = 'Device ready';
+    });
+
+    device.on('error', function(err) {
+        document.getElementById('status').innerText = 'Device error: ' + err.message;
+        console.error(err);
+    });
+
+    device.on('disconnect', function() {
+        document.getElementById('hangupBtn').disabled = true;
+        document.getElementById('callBtn').disabled = false;
+        document.getElementById('status').innerText = 'Call ended';
+    });
+}
+
+initDevice();
+
+// Step 4: Make a call
+document.getElementById('callBtn').addEventListener('click', function() {
+    const number = document.getElementById('customerNumber').value.trim();
+    if (!number) { alert('Enter a number'); return; }
+
+    device.connect({ To: number });
+    document.getElementById('callBtn').disabled = true;
+    document.getElementById('hangupBtn').disabled = false;
+    document.getElementById('status').innerText = 'Calling ' + number + '...';
+});
+
+// Step 5: Hang up
+document.getElementById('hangupBtn').addEventListener('click', function() {
+    device.disconnectAll();
+});
+</script>
+
+</body>
+</html>
